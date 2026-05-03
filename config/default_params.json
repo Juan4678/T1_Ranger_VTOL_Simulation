@@ -1,0 +1,222 @@
+{
+  "vehicle": {
+    "name": "Heewing T1 Ranger VTOL (research surrogate)",
+    "mass_kg": 4.2,
+    "gravity_mps2": 9.81,
+    "inertia_kgm2": [
+      0.18,
+      0.22,
+      0.35
+    ],
+    "linear_drag": [
+      0.15,
+      0.15,
+      0.25
+    ],
+    "angular_drag": [
+      0.03,
+      0.03,
+      0.05
+    ],
+    "rotors": [
+      {
+        "name": "front_left",
+        "position_m": [
+          0.45,
+          0.35,
+          0.0
+        ],
+        "axis_body": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "direction": 1,
+        "max_thrust_n": 24.0,
+        "torque_coefficient": 0.018
+      },
+      {
+        "name": "front_right",
+        "position_m": [
+          0.45,
+          -0.35,
+          0.0
+        ],
+        "axis_body": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "direction": -1,
+        "max_thrust_n": 24.0,
+        "torque_coefficient": 0.018
+      },
+      {
+        "name": "rear_left",
+        "position_m": [
+          -0.45,
+          0.35,
+          0.0
+        ],
+        "axis_body": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "direction": -1,
+        "max_thrust_n": 24.0,
+        "torque_coefficient": 0.018
+      },
+      {
+        "name": "rear_right",
+        "position_m": [
+          -0.45,
+          -0.35,
+          0.0
+        ],
+        "axis_body": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "direction": 1,
+        "max_thrust_n": 24.0,
+        "torque_coefficient": 0.018
+      },
+      {
+        "name": "pusher",
+        "position_m": [
+          -0.1,
+          0.0,
+          0.0
+        ],
+        "axis_body": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "direction": 1,
+        "max_thrust_n": 18.0,
+        "torque_coefficient": 0.0
+      }
+    ]
+  },
+  "controllers": {
+    "active": "pid",
+    "pid": {
+      "velocity_gains": {
+        "kp": [
+          0.8,
+          0.8,
+          1.2
+        ],
+        "ki": [
+          0.05,
+          0.05,
+          0.2
+        ],
+        "kd": [
+          0.12,
+          0.12,
+          0.18
+        ]
+      },
+      "attitude_gains": {
+        "kp": [
+          4.5,
+          4.5,
+          2.0
+        ],
+        "ki": [
+          0.05,
+          0.05,
+          0.02
+        ],
+        "kd": [
+          1.2,
+          1.2,
+          0.4
+        ]
+      },
+      "limits": {
+        "tilt_rad": 0.35,
+        "collective_margin_n": 20.0
+      }
+    },
+    "lqr": {
+      "Q_diag": [
+        2.0,
+        2.0,
+        3.0,
+        18.0,
+        18.0,
+        8.0,
+        2.0,
+        2.0,
+        1.0
+      ],
+      "R_diag": [
+        0.25,
+        0.5,
+        0.5,
+        0.8
+      ]
+    }
+  },
+  "simulations": {
+    "dt": 0.01,
+    "duration_s": 20.0,
+    "save_dir": "results"
+  },
+  "fault_examples": {
+    "single_rotor_hover": {
+      "name": "single_rotor_hover",
+      "actuator_faults": [
+        {
+          "rotor_indices": [
+            0
+          ],
+          "start_time": 6.0,
+          "duration": null,
+          "efficiency": 0.0
+        }
+      ],
+      "sensor_faults": [
+        {
+          "state_indices": [
+            9,
+            10,
+            11
+          ],
+          "start_time": 0.0,
+          "duration": null,
+          "bias": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "noise_std": [
+            0.01,
+            0.01,
+            0.015
+          ]
+        }
+      ]
+    },
+    "dual_rotor_transition": {
+      "name": "dual_rotor_transition",
+      "actuator_faults": [
+        {
+          "rotor_indices": [
+            0,
+            3
+          ],
+          "start_time": 8.0,
+          "duration": 4.0,
+          "efficiency": 0.5
+        }
+      ],
+      "sensor_faults": []
+    }
+  }
+}
