@@ -24,8 +24,12 @@ from src.simulations.trajectories import hover_trajectory, line_trajectory
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run a fault scenario experiment.")
     parser.add_argument("--config", default=str(REPO_ROOT / "config" / "default_params.json"))
-    parser.add_argument("--controller", default="pid", choices=["pid", "lqr", "advanced"])
-    parser.add_argument("--fault", default="single_rotor_hover", choices=["single_rotor_hover", "dual_rotor_transition"])
+    parser.add_argument("--controller", default="pid", choices=["pid", "lqr", "advanced", "ftc"])
+    parser.add_argument(
+        "--fault",
+        default="single_rotor_hover",
+        choices=["single_rotor_hover", "dual_rotor_transition", "tail_pusher_off", "rear_right_off"],
+    )
     parser.add_argument("--duration", type=float, default=None)
     parser.add_argument("--plot", action="store_true")
     parser.add_argument("--save", action="store_true")
@@ -39,7 +43,7 @@ def main() -> None:
     fault_profile = FaultInjector.from_dict(config["fault_examples"][args.fault], model.rotor_count)
 
     trajectory = hover_trajectory(position=(0.0, 0.0, -2.0))
-    if args.fault == "dual_rotor_transition":
+    if args.fault in {"dual_rotor_transition", "tail_pusher_off"}:
         trajectory = line_trajectory(start=(0.0, 0.0, -2.0), end=(12.0, 0.0, -2.0), duration=duration)
 
     initial_state = np.zeros(12, dtype=float)

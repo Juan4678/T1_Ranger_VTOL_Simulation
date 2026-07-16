@@ -115,8 +115,10 @@ def simulate_experiment(model, controller, fault_profile: Optional[FaultInjector
     for idx, time_s in enumerate(times):
         reference = trajectory(time_s)
         sensed_state = fault_profile.apply_sensor_faults(time_s, state)
-        commands = controller.compute_controls(sensed_state, reference, t=time_s, dt=dt)
         efficiency = fault_profile.rotor_efficiencies(time_s, model.rotor_count)
+        if hasattr(controller, "update_rotor_efficiency_estimate"):
+            controller.update_rotor_efficiency_estimate(efficiency, time_s)
+        commands = controller.compute_controls(sensed_state, reference, t=time_s, dt=dt)
         faulted_commands = np.clip(commands * efficiency, 0.0, model.max_thrusts)
 
         ref_position = np.asarray(reference.get("position", np.zeros(3)), dtype=float)

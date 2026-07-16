@@ -11,7 +11,15 @@ def build_controller(name: str, model, config: dict, log_enabled: bool = False):
         from .baseline_lqr_controller import BaselineLQRController
 
         return BaselineLQRController(model, config, log_enabled=log_enabled)
-    if normalized in {"advanced", "placeholder", "ftc", "mpc"}:
+    if normalized in {"ftc", "robust", "fault_tolerant"}:
+        from .fault_tolerant_allocator import FaultTolerantAllocatorController
+
+        nominal_name = config.get("controllers", {}).get("fault_tolerant", {}).get("nominal_controller", "pid")
+        if nominal_name.lower() in {"ftc", "robust", "fault_tolerant"}:
+            raise ValueError("Fault-tolerant controller cannot wrap itself as the nominal controller.")
+        nominal = build_controller(nominal_name, model, config, log_enabled=log_enabled)
+        return FaultTolerantAllocatorController(model, nominal, config, log_enabled=log_enabled)
+    if normalized in {"advanced", "placeholder", "mpc"}:
         from .advanced_controller import PlaceholderAdvancedController
 
         return PlaceholderAdvancedController(model, config, log_enabled=log_enabled)
