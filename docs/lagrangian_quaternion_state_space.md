@@ -25,6 +25,13 @@ The Lagrangian/quaternion model is better for the research story:
 - the state-space form is ready for linearization, LQR, EKF, MPC, and fault
   detection work
 
+This document intentionally keeps the first research implementation attainable.
+It derives a rigid-body Lagrange-d'Alembert quaternion model with configurable
+rotor wrench inputs. It does not yet derive a full symbolic multibody model with
+time-varying `M(q)`, `C(q, q_dot)`, and `G(q)` terms for moving tilt hardware.
+That belongs in the next research layer after the rigid-body simulation and
+controller metrics are working.
+
 ## Frames And Conventions
 
 - `I`: inertial/world frame

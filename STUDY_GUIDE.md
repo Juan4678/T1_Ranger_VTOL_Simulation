@@ -6,19 +6,23 @@ software experience. The goal is to help you move from "what is this code?" to
 
 ## Best Way To Read This
 
-Use **VS Code** for the best experience:
+Use **Obsidian** for the best reading experience, especially for matrix-heavy
+LaTeX:
+
+- Open the folder `t1-ranger-vtol-research-python` as an Obsidian vault.
+- Open this file.
+- Switch to Reading View with `Ctrl+E`.
+
+Keep **VS Code** open next to it for code navigation and terminal commands:
 
 - Open the folder `t1-ranger-vtol-research-python`.
 - Open this file.
 - Press `Ctrl+Shift+V` for Markdown Preview.
 - Use the terminal inside VS Code for the commands.
 
-For equations, VS Code's built-in preview may show raw LaTeX. If you want nicer
-math rendering, use one of these:
-
-- GitHub web preview after pushing the repo.
-- Obsidian with the repo folder opened as a vault.
-- VS Code with a Markdown math extension.
+VS Code's built-in preview may show raw LaTeX for some block matrices. If you
+want to stay inside VS Code, install a Markdown math extension; otherwise use
+Obsidian as the main study viewer.
 
 ## What This Repository Is
 
@@ -116,6 +120,14 @@ with quaternion attitude:
 Read that after you are comfortable explaining the equations above. The physics
 is connected, but the quaternion version is the better foundation for aggressive
 attitude motion, state estimation, and thesis-level linearization.
+
+Scope guardrail: the current research model is a rigid-body VTOL surrogate with
+fixed rotor geometry and a pusher reserved for transition experiments. It does
+not yet implement a full symbolic multibody model with moving tilt-gondola
+coordinates, time-varying inertia matrix `M(q)`, or servo linkage constraints.
+Those are valid future extensions, but the attainable first result is the
+nonlinear quaternion state-space model, local linearization, simulation runs,
+and controller/fault metrics.
 
 In code, these live in:
 
