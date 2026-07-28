@@ -23,7 +23,7 @@ from src.simulations.trajectories import hover_trajectory, line_trajectory
 
 
 def _trajectory_for_fault(name: str, duration_s: float):
-    if "transition" in name or "pusher" in name or "tail" in name:
+    if "transition" in name or "tilt_pair" in name:
         return line_trajectory(start=(0.0, 0.0, -2.0), end=(10.0, 0.0, -2.0), duration=duration_s)
     return hover_trajectory(position=(0.0, 0.0, -2.0))
 
@@ -35,7 +35,7 @@ def main() -> None:
     parser.add_argument(
         "--faults",
         nargs="+",
-        default=["single_rotor_hover", "tail_pusher_off", "dual_rotor_transition"],
+        default=["single_rotor_hover", "rear_lift_off", "front_tilt_pair_degraded"],
     )
     parser.add_argument("--duration", type=float, default=None)
     parser.add_argument("--save", action="store_true", help="Write CSV/NPZ outputs under the configured results folder.")

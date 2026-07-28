@@ -5,6 +5,100 @@ more defensible T1 Ranger PNP model.
 
 The priorities are ordered by impact on simulation accuracy.
 
+## Known Public Baseline Now Reflected In Config
+
+The default configuration now represents a T1 Ranger PNP hover-mode tricopter
+surrogate.
+
+Known from the supplied parts list and public product data:
+
+| Parameter | Current value used | Notes |
+| --- | --- | --- |
+| Wingspan | `0.73 m` | public T1 Ranger PNP spec |
+| Length | `0.645 m` | public T1 Ranger PNP spec |
+| Height | `0.14 m` | public T1 Ranger PNP spec |
+| Empty weight | `0.451 kg` | documented under `hardware_notes`; not used as simulation mass |
+| Takeoff mass range | `0.6-0.75 kg` | documented under `hardware_notes` |
+| Simulation mass | `1.4 kg` | user-measured gross VTOL mass with selected battery/configuration |
+| Battery selected | Gens Ace `4S 14.8 V 5000 mAh 45C`, T-style connector | nominal `74 Wh`; theoretical label current `225 A` |
+| Motors | `3x FX-1806 2000KV` | left tilt, right tilt, rear lift in hover baseline |
+| ESCs | `3x FX-25A 25A` | electrical/current limits documented only |
+| Propellers | `3x Gemfan 5126` | command-to-thrust map still unknown |
+| Tilt servos | `2x metal gear tilt servos` | future front `alpha` dynamics |
+| Flight controller | `FX-405 / ArduPilot 4.3.5 factory setup` | use Mission Planner for parameter export |
+| Speed envelope | `<20 km/h` minimum, `>120 km/h` maximum | document only until logs or aerodynamic model support it |
+| Range/endurance claims | `>25 km`, `>65 min` | do not use for validation until battery, payload, wind, and cruise logs are known |
+
+Derived placeholders now in `config/default_params.json`:
+
+| Parameter | Placeholder method | Replace with |
+| --- | --- | --- |
+| `vehicle.inertia_kgm2` | rectangular bounding-box estimate from `1.4 kg`, span, length, height | measured inertia or CAD estimate corrected by measured mass |
+| `vehicle.rotors[*].position_m` | symmetric hover-stable estimate around CG | measured hub coordinates relative to CG |
+| `vehicle.rotors[*].max_thrust_n` | `7.0 N` placeholder sized above the `4.58 N` equal-share hover requirement | static thrust stand data for FX-1806 + 5126 prop + selected 4S battery |
+| `vehicle.rotors[*].torque_coefficient` | rough yaw reaction placeholder | thrust/torque stand or log-derived yaw response |
+| Drag terms | small damping placeholders | glide/flight-log system identification |
+
+Scope note: the current model uses the two front tilt motors as vertical hover
+rotors. It does not yet include the transition angle `alpha`, `alpha_dot`, or
+servo dynamics. Add those only after the hover model can be explained, simulated,
+and compared against simple logs.
+
+## Parameter Collection Checklist
+
+Measure or investigate these next, in this order:
+
+1. **Mass and balance**
+
+   - Confirm the `1.4 kg` gross mass with battery, receiver, payload, wiring,
+     props, and hatches exactly as flown.
+   - Measure CG from the nose, from the wing root/chord reference if available,
+     and vertically if practical.
+   - Weigh the selected 4S 5000 mAh battery by itself.
+   - Record alternate mass/CG values for smaller batteries, because the public
+     aircraft range is much lighter than the current gross mass.
+
+2. **Rotor geometry**
+
+   - Measure each motor hub position relative to CG:
+     `r_i = [x_i, y_i, z_i]^T`.
+   - Measure hover thrust axis for each rotor:
+     `a_i = [a_x, a_y, a_z]^T`.
+   - For the two front tilt motors, measure `alpha_min`, `alpha_max`, neutral
+     hover angle, and the sign convention.
+
+3. **Propulsion**
+
+   - Static thrust curve for FX-1806 2000KV + 5126 prop on the selected 4S
+     battery: PWM/throttle vs thrust.
+   - Current, voltage, and RPM at each thrust point.
+   - Max safe continuous thrust per motor, not only burst thrust.
+   - Motor/ESC time constant from a step command.
+   - Reaction torque or yaw response data for estimating `torque_coefficient`.
+
+4. **Tilt and servo dynamics**
+
+   - PWM-to-tilt-angle calibration for both front tilt servos.
+   - Tilt rate limit `alpha_dot_max`.
+   - Delay/backlash/deadband.
+   - Whether both tilt servos move symmetrically or need separate calibration.
+
+5. **Aerodynamics**
+
+   - Main wing chord, wing area `S`, aspect ratio, and approximate airfoil if
+     known.
+   - Tail areas and moment arms.
+   - Approximate `CL_alpha`, `CD0`, induced drag factor, and stall angle.
+   - Airspeed, attitude, throttle, and altitude logs during transition.
+
+6. **Autopilot and logs**
+
+   - Full Mission Planner `.param` export.
+   - DataFlash logs for restrained motor tests, hover, climb/descent, and any
+     already-safe transition.
+   - RC output/PWM logs so the simulation can reconstruct real actuator inputs.
+   - Battery voltage/current logs for voltage sag correction.
+
 ## Priority 1: Physical Parameters
 
 These are the first measurements to collect because they directly affect hover,

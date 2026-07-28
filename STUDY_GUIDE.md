@@ -81,10 +81,16 @@ Read the folders in this order:
 
 ## Mental Model Of The Vehicle
 
-The model is a simplified VTOL surrogate:
+The model is a simplified **T1 Ranger hover-mode tricopter surrogate**:
 
-- Four vertical lift rotors handle hover.
-- One pusher motor represents forward flight/transition experiments.
+- Three hover rotors represent the T1 Ranger PNP tri-motor layout.
+- The two front motors are treated as tilt-capable hardware, but in this first
+  baseline their axes stay vertical for hover analysis.
+- The rear motor is treated as a vertical lift motor for hover.
+- The selected battery/test configuration uses the user-measured gross mass:
+  `m = 1.4 kg`.
+- This is heavier than the public `0.6-0.75 kg` takeoff-weight range, so treat
+  it as a heavy-configuration simulation, not a manufacturer-envelope claim.
 - The state has 12 elements:
 
 ```text
@@ -101,12 +107,55 @@ The convention is:
 The core rigid-body equations are the idea you should understand first:
 
 $$
-m \dot{v} = R(\phi,\theta,\psi) F_b + F_d + mg
+m \dot{\mathbf{v}}_I =
+R_{IB}(\phi,\theta,\psi)\mathbf{F}_B
++ \mathbf{F}_{D,I}
++ m\mathbf{g}_I
 $$
 
 $$
-I \dot{\omega} = \tau_b - \omega \times I\omega - D_\omega \omega
+J\dot{\boldsymbol{\omega}}_B =
+\boldsymbol{\tau}_B
+- \boldsymbol{\omega}_B \times J\boldsymbol{\omega}_B
+- D_\omega\boldsymbol{\omega}_B
 $$
+
+Variables:
+
+- `m`: vehicle mass. Current measured gross configuration: `1.4 kg`.
+- `\mathbf{v}_I = [v_x, v_y, v_z]^T`: velocity in the inertial frame.
+- `R_{IB}`: rotation matrix that maps body-frame forces into the inertial frame.
+- `\mathbf{F}_B`: total rotor force expressed in the body frame.
+- `\mathbf{F}_{D,I}`: simplified drag force in the inertial frame.
+- `\mathbf{g}_I = [0, 0, -g]^T`: gravity vector.
+- `J = diag(J_x, J_y, J_z)`: diagonal inertia approximation.
+- `\boldsymbol{\omega}_B = [p, q, r]^T`: body angular-rate vector.
+- `\boldsymbol{\tau}_B`: total body torque from rotor moment arms and yaw
+  reaction torque.
+- `D_\omega`: angular damping placeholder.
+
+For hover, the basic weight balance is:
+
+$$
+\sum_{i=1}^{3} T_i \approx mg
+$$
+
+With `m = 1.4 kg`:
+
+$$
+mg = 1.4(9.81) = 13.73 \text{ N}
+$$
+
+So equal hover sharing would require:
+
+$$
+T_i \approx \frac{13.73}{3} = 4.58 \text{ N per motor}
+$$
+
+That number is a useful sanity check. The current config uses a placeholder
+`7.0 N` max thrust per motor so the simulated heavy configuration can hover
+with control margin. Replace that with thrust-stand data for the FX-1806 +
+5126 propeller on the selected 4S battery.
 
 This Newton-Euler form stays in the guide on purpose. It is the fastest way to
 learn how forces, torques, gravity, drag, and rotor allocation interact.
@@ -114,20 +163,55 @@ learn how forces, torques, gravity, drag, and rotor allocation interact.
 The research deliverable then moves to a Lagrange-d'Alembert state-space model
 with quaternion attitude:
 
-- `docs/lagrangian_quaternion_state_space.md`
+- `docs/lagrangian_quaternion_state_space.md` 
 - `src/dynamics/lagrangian_quaternion.py`
 
 Read that after you are comfortable explaining the equations above. The physics
 is connected, but the quaternion version is the better foundation for aggressive
 attitude motion, state estimation, and thesis-level linearization.
 
-Scope guardrail: the current research model is a rigid-body VTOL surrogate with
-fixed rotor geometry and a pusher reserved for transition experiments. It does
-not yet implement a full symbolic multibody model with moving tilt-gondola
-coordinates, time-varying inertia matrix `M(q)`, or servo linkage constraints.
-Those are valid future extensions, but the attainable first result is the
-nonlinear quaternion state-space model, local linearization, simulation runs,
-and controller/fault metrics.
+Scope guardrail: the current research model is a rigid-body hover surrogate
+with fixed rotor geometry. It does not yet implement the front tilt angle
+`alpha` as a dynamic state, a full symbolic multibody model with moving
+tilt-gondola coordinates, time-varying inertia matrix `M(q)`, or servo linkage
+constraints. Those are valid future extensions, but the attainable first result
+is the nonlinear quaternion state-space model, local linearization, simulation
+runs, and controller/fault metrics.
+
+## Current Hardware Baseline
+
+Known data now reflected in `config/default_params.json`:
+
+| Item | Value |
+| --- | --- |
+| Aircraft | Hee Wing T1 Ranger VTOL PNP with flight controller |
+| Wingspan | `730 mm` |
+| Length | `645 mm` |
+| Height | `140 mm` |
+| Fuselage size | `245 mm x 51 mm x 48 mm` |
+| Motors | `3x FX-1806 2000KV brushless` |
+| ESCs | `3x FX-25A brushless` |
+| Propellers | `3x 5126` |
+| Servos | `3x FX-7g digital metal gear` |
+| Tilt servos | `2x metal gear tilt servos` |
+| Flight controller | `FX-405`, F405-based VTOL controller |
+| GPS | GPS/compass module |
+| Battery selected | Gens Ace `4S 14.8 V 5000 mAh 45C`, T-style connector |
+| Measured gross mass | `1.4 kg` |
+
+Battery sanity checks:
+
+$$
+E_{nominal} = VQ = 14.8(5.0) = 74 \text{ Wh}
+$$
+
+$$
+I_{max,theoretical} = C Q = 45(5.0) = 225 \text{ A}
+$$
+
+Do not confuse theoretical C-rating current with safe continuous aircraft
+current. For modeling, battery logs under load are more trustworthy than the
+label.
 
 In code, these live in:
 
@@ -143,22 +227,35 @@ What to study there:
 
 ## Rotor Allocation
 
-Each rotor contributes force:
+Each rotor contributes force along its thrust axis:
 
 $$
-F_i = u_i a_i
+\mathbf{F}_i = T_i\mathbf{a}_i
 $$
 
 Where:
 
-- `u_i` is rotor thrust in Newtons.
-- `a_i` is the rotor axis in body coordinates.
+- `i` is the rotor index.
+- `T_i` is rotor thrust in Newtons.
+- `\mathbf{a}_i = [a_x, a_y, a_z]^T` is the rotor thrust-axis unit vector in
+  body coordinates.
+- In the current hover baseline, all three rotors use
+  `\mathbf{a}_i = [0, 0, 1]^T`.
 
 Each rotor also creates torque:
 
 $$
-\tau_i = r_i \times F_i + \tau_{yaw,i}
+\boldsymbol{\tau}_i =
+\mathbf{r}_i \times \mathbf{F}_i
++ d_i c_{\tau,i}T_i\mathbf{e}_z
 $$
+
+Where:
+
+- `\mathbf{r}_i = [x_i, y_i, z_i]^T` is the motor position relative to CG.
+- `d_i` is motor spin direction sign.
+- `c_{\tau,i}` is the yaw reaction-torque coefficient.
+- `\mathbf{e}_z = [0, 0, 1]^T` is the body-z unit vector.
 
 The code builds a hover allocation matrix:
 
@@ -172,6 +269,12 @@ F_z \\
 =
 A u
 $$
+
+For the current T1 hover baseline:
+
+```text
+u = [T_front_left, T_front_right, T_rear]^T
+```
 
 This is important because the fault-tolerant controller uses the same concept:
 when a motor is degraded or disabled, it tries to reallocate the requested
@@ -269,13 +372,14 @@ A motor fault is represented as an efficiency:
 The current profiles include:
 
 - `single_rotor_hover`
-- `dual_rotor_transition`
-- `tail_pusher_off`
-- `rear_right_off`
+- `front_tilt_pair_degraded`
+- `rear_lift_off`
+- `front_right_tilt_off`
 
-The tail/pusher-off case is useful because it tests a forward-flight actuator
-failure without destroying hover lift. A vertical lift rotor loss is much harder
-because it removes both lift and torque authority.
+The rear-lift and front-tilt motor faults are intentionally severe in a
+tricopter hover model because losing one motor removes both lift and torque
+authority. Treat them as degradation studies first, not guaranteed recovery
+cases.
 
 ## Transition Aerodynamics
 
@@ -367,7 +471,7 @@ That distinction matters in a serious research presentation.
 ### 5. Motor Fault Campaign
 
 ```powershell
-C:\Python314\python.exe src\simulations\run_motor_fault_campaign.py --duration 10 --controllers pid ftc --faults single_rotor_hover tail_pusher_off rear_right_off
+C:\Python314\python.exe src\simulations\run_motor_fault_campaign.py --duration 10 --controllers pid ftc --faults single_rotor_hover rear_lift_off front_right_tilt_off
 ```
 
 This prints a table with:
@@ -473,7 +577,7 @@ Read:
 Run:
 
 ```powershell
-C:\Python314\python.exe src\simulations\run_motor_fault_campaign.py --duration 10 --controllers pid ftc --faults single_rotor_hover tail_pusher_off rear_right_off
+C:\Python314\python.exe src\simulations\run_motor_fault_campaign.py --duration 10 --controllers pid ftc --faults single_rotor_hover rear_lift_off front_right_tilt_off
 ```
 
 ### Stage 5: Transition

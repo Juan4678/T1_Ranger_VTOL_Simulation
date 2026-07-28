@@ -22,8 +22,9 @@ VTOL dynamics to fault-tolerant control in a beginner-friendly order.
 
 - The study baseline is a simplified 6-DoF Newton-Euler rigid-body model with Euler-angle attitude states.
 - The research dynamics layer derives a Lagrange-d'Alembert quaternion state-space model in `docs/lagrangian_quaternion_state_space.md` and `src/dynamics/lagrangian_quaternion.py`.
-- The rotor layout is a research surrogate loosely inspired by the T1 Ranger VTOL configuration.
-- Hover lift is modeled primarily through four vertical rotors, with an additional pusher rotor reserved for later transition experiments.
+- The rotor layout is a hover-mode tricopter surrogate: two front tilt motors and one rear lift motor, all vertical in the first baseline.
+- The active mass is the user-measured `1.4 kg` gross configuration with a Gens Ace 4S 14.8 V 5000 mAh 45C battery; this is outside the public 600-750 g takeoff-weight range and should be treated as a heavy-configuration study.
+- The front tilt angle `alpha` is documented as future transition work; it is not active in the hover baseline yet.
 - This repository is for simulation and controller research only. It is **not** flight-ready and should not be used directly on hardware.
 
 ## Repository structure
@@ -71,8 +72,8 @@ python src/simulations/run_trajectory_tracking.py --controller lqr --trajectory 
 
 ```bash
 python src/simulations/run_fault_scenarios.py --controller pid --fault single_rotor_hover --plot
-python src/simulations/run_fault_scenarios.py --controller ftc --fault tail_pusher_off
-python src/simulations/run_motor_fault_campaign.py --controllers pid ftc --faults single_rotor_hover tail_pusher_off rear_right_off
+python src/simulations/run_fault_scenarios.py --controller ftc --fault rear_lift_off
+python src/simulations/run_motor_fault_campaign.py --controllers pid ftc --faults single_rotor_hover rear_lift_off front_right_tilt_off
 ```
 
 The `ftc` controller is a Python-side research benchmark. It wraps the nominal

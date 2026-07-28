@@ -1,29 +1,57 @@
 {
   "vehicle": {
-    "name": "Heewing T1 Ranger VTOL (research surrogate)",
-    "mass_kg": 4.2,
+    "name": "Heewing T1 Ranger VTOL PNP (hover-mode research surrogate)",
+    "mass_kg": 1.4,
     "gravity_mps2": 9.81,
+    "dimensions_m": {
+      "wingspan": 0.73,
+      "length": 0.645,
+      "height": 0.14,
+      "fuselage_length": 0.245,
+      "fuselage_width": 0.051,
+      "fuselage_height": 0.048
+    },
+    "hardware_notes": {
+      "public_empty_weight_kg": 0.451,
+      "public_takeoff_weight_range_kg": [
+        0.6,
+        0.75
+      ],
+      "measured_gross_mass_kg": 1.4,
+      "measured_mass_note": "User-measured gross VTOL mass with selected battery/configuration. This is outside the public 600-750 g takeoff-weight range, so model results should be treated as a heavy-configuration study.",
+      "recommended_battery": "4S LiPo, 1300-3500 mAh in product spec; 1300-5000 mAh / 150-250 g listed as user-supplied requirement range",
+      "selected_battery": "Gens Ace 4S 14.8 V 5000 mAh 45C LiPo, T-style connector",
+      "selected_battery_nominal_energy_wh": 74.0,
+      "selected_battery_theoretical_max_current_a": 225.0,
+      "motors": "3x FX-1806 2000KV brushless",
+      "escs": "3x FX-25A 25A ESC",
+      "propellers": "3x Gemfan 5126",
+      "tilt_servos": "2x metal gear tilt servos for front tilt motors",
+      "flight_controller": "FX-405 F405-based VTOL controller with ArduPilot 4.3.5 factory setup",
+      "model_scope": "Hover-mode tricopter geometry. Front tilt alpha dynamics are not active in this baseline.",
+      "thrust_placeholder_note": "Per-motor max thrust is a simulation placeholder sized above the 1.4 kg hover requirement. Replace with thrust-stand data for FX-1806 + 5126 prop on the selected 4S battery."
+    },
     "inertia_kgm2": [
-      0.18,
-      0.22,
-      0.35
+      0.064,
+      0.051,
+      0.111
     ],
     "linear_drag": [
-      0.15,
-      0.15,
-      0.25
+      0.04,
+      0.04,
+      0.06
     ],
     "angular_drag": [
-      0.03,
-      0.03,
-      0.05
+      0.008,
+      0.008,
+      0.012
     ],
     "rotors": [
       {
-        "name": "front_left",
+        "name": "front_left_tilt_hover",
         "position_m": [
-          0.45,
-          0.35,
+          0.16,
+          0.29,
           0.0
         ],
         "axis_body": [
@@ -32,14 +60,14 @@
           1.0
         ],
         "direction": 1,
-        "max_thrust_n": 24.0,
-        "torque_coefficient": 0.018
+        "max_thrust_n": 7.0,
+        "torque_coefficient": 0.006
       },
       {
-        "name": "front_right",
+        "name": "front_right_tilt_hover",
         "position_m": [
-          0.45,
-          -0.35,
+          0.16,
+          -0.29,
           0.0
         ],
         "axis_body": [
@@ -48,30 +76,14 @@
           1.0
         ],
         "direction": -1,
-        "max_thrust_n": 24.0,
-        "torque_coefficient": 0.018
+        "max_thrust_n": 7.0,
+        "torque_coefficient": 0.006
       },
       {
-        "name": "rear_left",
+        "name": "rear_lift",
         "position_m": [
-          -0.45,
-          0.35,
-          0.0
-        ],
-        "axis_body": [
+          -0.32,
           0.0,
-          0.0,
-          1.0
-        ],
-        "direction": -1,
-        "max_thrust_n": 24.0,
-        "torque_coefficient": 0.018
-      },
-      {
-        "name": "rear_right",
-        "position_m": [
-          -0.45,
-          -0.35,
           0.0
         ],
         "axis_body": [
@@ -80,24 +92,8 @@
           1.0
         ],
         "direction": 1,
-        "max_thrust_n": 24.0,
-        "torque_coefficient": 0.018
-      },
-      {
-        "name": "pusher",
-        "position_m": [
-          -0.1,
-          0.0,
-          0.0
-        ],
-        "axis_body": [
-          1.0,
-          0.0,
-          0.0
-        ],
-        "direction": 1,
-        "max_thrust_n": 18.0,
-        "torque_coefficient": 0.0
+        "max_thrust_n": 7.0,
+        "torque_coefficient": 0.006
       }
     ]
   },
@@ -140,7 +136,7 @@
       },
       "limits": {
         "tilt_rad": 0.35,
-        "collective_margin_n": 20.0
+        "collective_margin_n": 2.0
       }
     },
     "lqr": {
@@ -209,13 +205,13 @@
         }
       ]
     },
-    "dual_rotor_transition": {
-      "name": "dual_rotor_transition",
+    "front_tilt_pair_degraded": {
+      "name": "front_tilt_pair_degraded",
       "actuator_faults": [
         {
           "rotor_indices": [
             0,
-            3
+            1
           ],
           "start_time": 8.0,
           "duration": 4.0,
@@ -224,12 +220,12 @@
       ],
       "sensor_faults": []
     },
-    "tail_pusher_off": {
-      "name": "tail_pusher_off",
+    "rear_lift_off": {
+      "name": "rear_lift_off",
       "actuator_faults": [
         {
           "rotor_indices": [
-            4
+            2
           ],
           "start_time": 6.0,
           "duration": null,
@@ -238,12 +234,12 @@
       ],
       "sensor_faults": []
     },
-    "rear_right_off": {
-      "name": "rear_right_off",
+    "front_right_tilt_off": {
+      "name": "front_right_tilt_off",
       "actuator_faults": [
         {
           "rotor_indices": [
-            3
+            1
           ],
           "start_time": 6.0,
           "duration": null,

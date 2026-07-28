@@ -28,7 +28,12 @@ def main() -> None:
     parser.add_argument(
         "--fault",
         default="single_rotor_hover",
-        choices=["single_rotor_hover", "dual_rotor_transition", "tail_pusher_off", "rear_right_off"],
+        choices=[
+            "single_rotor_hover",
+            "front_tilt_pair_degraded",
+            "rear_lift_off",
+            "front_right_tilt_off",
+        ],
     )
     parser.add_argument("--duration", type=float, default=None)
     parser.add_argument("--plot", action="store_true")
@@ -43,7 +48,7 @@ def main() -> None:
     fault_profile = FaultInjector.from_dict(config["fault_examples"][args.fault], model.rotor_count)
 
     trajectory = hover_trajectory(position=(0.0, 0.0, -2.0))
-    if args.fault in {"dual_rotor_transition", "tail_pusher_off"}:
+    if args.fault == "front_tilt_pair_degraded":
         trajectory = line_trajectory(start=(0.0, 0.0, -2.0), end=(12.0, 0.0, -2.0), duration=duration)
 
     initial_state = np.zeros(12, dtype=float)

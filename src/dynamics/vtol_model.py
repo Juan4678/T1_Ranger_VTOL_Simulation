@@ -155,7 +155,7 @@ class VTOLDynamicsModel:
         thrust_per_axis_unit = self.params.mass_kg * self.params.gravity_mps2 / total_vertical_share
         for idx in self.hover_indices:
             axis_z = self.params.rotors[idx].normalized_axis()[2]
-            commands[idx] = thrust_per_axis_unit / max(axis_z, 1e-6)
+            commands[idx] = thrust_per_axis_unit * max(axis_z, 1e-6)
         return np.clip(commands, 0.0, self.max_thrusts)
 
     def hover_allocation_matrix(self) -> np.ndarray:
