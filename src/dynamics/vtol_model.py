@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict, List, Sequence
+from dataclasses import dataclass, field
+from typing import Dict, List, Sequence, Optional
 
 import numpy as np
 
@@ -23,12 +23,22 @@ class RotorSpec:
     max_thrust_n: float
     torque_coefficient: float = 0.0
 
+    _normalized_axis: Optional[np.ndarray] = field(default=None, init=False, repr=False)
+
     def normalized_axis(self) -> np.ndarray:
+        """Return the unit axis vector for this rotor (cached).
+
+        Caches the normalized axis on first call to avoid repeated
+        normalization during tight simulation loops.
+        """
+        if self._normalized_axis is not None:
+            return self._normalized_axis
         axis = _as_array(self.axis_body)
         norm = np.linalg.norm(axis)
         if norm == 0.0:
             raise ValueError(f"Rotor '{self.name}' has a zero axis vector.")
-        return axis / norm
+        self._normalized_axis = axis / norm
+        return self._normalized_axis
 
 
 @dataclass
